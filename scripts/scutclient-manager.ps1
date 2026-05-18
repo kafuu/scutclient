@@ -121,6 +121,40 @@ function Require-Administrator {
     }
 }
 
+function Require-NpcapRuntime {
+    $systemRoot = $env:SystemRoot
+    if (-not $systemRoot) {
+        $systemRoot = $env:WINDIR
+    }
+    if (-not $systemRoot) {
+        $systemRoot = "C:\Windows"
+    }
+
+    $runtimeDirs = @(
+        (Join-Path $systemRoot "System32"),
+        (Join-Path $systemRoot "SysWOW64")
+    )
+
+    foreach ($dir in $runtimeDirs) {
+        $wpcap = Join-Path $dir "wpcap.dll"
+        $packet = Join-Path $dir "Packet.dll"
+        if ((Test-Path -LiteralPath $wpcap) -and (Test-Path -LiteralPath $packet)) {
+            return
+        }
+    }
+
+    $message = @(
+        "未检测到 Npcap 运行时，或安装时没有启用 WinPcap API-compatible Mode。",
+        "",
+        "请先安装或重新安装 Npcap Runtime：",
+        "https://npcap.com/#download",
+        "",
+        "安装时必须勾选：WinPcap API-compatible Mode",
+        "安装完成后，请重新运行 scripts\scutclient-manager.bat install"
+    ) -join [Environment]::NewLine
+    throw $message
+}
+
 function Wait-ExitKey {
     Write-Host ""
     Write-Host "按任意键关闭窗口..."
@@ -143,9 +177,12 @@ function Convert-SecureStringToPlainText {
 function Get-Adapters {
     param([string]$ExePath)
 
+    Require-NpcapRuntime
+
+    Write-Host "正在读取可用网卡..."
     $output = & $ExePath --list-ifaces 2>&1
     if ($LASTEXITCODE -ne 0) {
-        throw "使用 $ExePath 列出网卡失败。"
+        throw "使用 $ExePath 列出网卡失败，退出码：$LASTEXITCODE。"
     }
 
     $items = @()
@@ -236,7 +273,10 @@ function Quote-Argument {
 
 function Install-Task {
     Require-Administrator
+    Write-Host "正在检查 Npcap 运行时..."
+    Require-NpcapRuntime
 
+    Write-Host "正在查找 scutclient.exe..."
     $exePath = Resolve-ScutclientExe -ExplicitPath $Exe
 
     if (-not $Iface) {
@@ -301,6 +341,9 @@ function Show-Status {
 
 function Run-Task {
     Require-Administrator
+    Write-Host "正在检查 Npcap 运行时..."
+    Require-NpcapRuntime
+
     schtasks /Run /TN $TaskName
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
@@ -359,9 +402,9 @@ try {
         Wait-ExitKey
     }
 } catch {
-    [Console]::Error.WriteLine("错误：" + $_.Exception.Message)
+    Write-Host ("错误：" + $_.Exception.Message) -ForegroundColor Red
     if ($_.InvocationInfo) {
-        [Console]::Error.WriteLine("位置：" + $_.InvocationInfo.PositionMessage)
+        Write-Host ("位置：" + $_.InvocationInfo.PositionMessage) -ForegroundColor DarkRed
     }
     if ($PauseOnExit) {
         Wait-ExitKey

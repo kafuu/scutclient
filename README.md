@@ -28,7 +28,24 @@ README.zh-CN.md
 README.md
 COPYING
 ```
+请先用管理员权限打开 cmd，进入 `scutclient.exe` 所在目录。
 
+列出可用网卡：
+
+```bat
+scutclient.exe --list-ifaces
+```
+
+选择实际联网的网卡后，在前台手动运行认证：
+
+```bat
+scutclient.exe --iface "\Device\NPF_{GUID}" --username USER --password PASS
+```
+
+其中 `USER`、`PASS` 和 `\Device\NPF_{GUID}` 需要替换为实际账号、密码和
+网卡名称。
+
+请先确认前台运行时能够完成认证、网络可用，再继续设置登录时静默启动。
 ### 设置Windows登录时静默启动认证程序
 
 管理员 cmd 中执行：
