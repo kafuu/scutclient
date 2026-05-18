@@ -9,8 +9,15 @@
 #include <stdlib.h>
 #include <time.h>
 #include <stdarg.h>
+#include <sys/stat.h>
+
+#ifndef _WIN32
 #include <unistd.h>
-#include <sys/stat.h> 
+#else
+#ifdef ERROR
+#undef ERROR
+#endif
+#endif
 
 #define MAXLEN (2048)
 #define MAXFILEPATH (512)
@@ -25,5 +32,5 @@ typedef enum {
 } LOGTYPE;
 
 extern LOGLEVEL cloglev;
-int LogWrite(LOGTYPE logtype, LOGLEVEL loglevel, char *format, ...);
+int LogWrite(LOGTYPE logtype, LOGLEVEL loglevel, const char *format, ...);
 #endif /* LOGC_H_ */

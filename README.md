@@ -1,92 +1,138 @@
-scutclient
-=================
+# scutclient Windows
 
-SCUT Dr.com(X) client written in C.
+scutclient Windows 是 SCUT Dr.com(X) 客户端的 Windows 原生版本，用于在Windows 上完成校园网 802.1X/Dr.com 认证。
 
-# Compiling
-## Using automake (for all distribution)
-```bash
-git clone https://github.com/scutclient/scutclient.git
-cd scutclient
-mkdir build && cd build
-cmake ..
-make
+---
+## 快速开始
+
+本程序依赖 Npcap。运行前请先安装 Npcap 运行时，并在安装时勾选：
+
+```text
+WinPcap API-compatible Mode
 ```
 
-## Using OpenWrt buildroot
-### Download source code
-To compile the latest stable version, you only need **openwrt/Makefile** in the source code. Buildroot will automatically download the source.
+Npcap 下载页：
 
-If you want to compile the latest git HEAD, you need to clone the entire repository and checkout to the branch/version you need.
-
-### Preparation
-#### Using SDK
-Download and extract the SDK you need. For example(Snapshots on ar71xx):
-```bash
-wget https://downloads.openwrt.org/snapshots/targets/ar71xx/generic/openwrt-sdk-ar71xx-generic_gcc-5.5.0_musl.Linux-x86_64.tar.xz
-tar -Jxvf openwrt-sdk-ar71xx-generic_gcc-5.5.0_musl.Linux-x86_64.tar.xz
-cd openwrt-sdk-ar71xx-generic_gcc-5.5.0_musl.Linux-x86_64
+```text
+https://npcap.com/#download
 ```
 
-#### Using OpenWrt source code
-Nothing to do here.
+Release 包应包含：
 
-### Creating your package
-Create a directory called scutclient inside your package directory and copy openwrt/Makefile into it. (Of course this can be done using GUI file manager :D )
-```bash
-mkdir package/scutclient
-cp {SCUTCLIENT_SRC_DIR}/openwrt/Makefile package/scutclient
-```
-Then you've created a package for the latest stable version.
-
-If you want to compile other version you need to edit the **openwrt/Makefile** and change variable SRCDIR (at line 12) to your source code directory. 
-
-
-### Compiling
-#### Using SDK
-
-Execute the following command:
-
-```bash
-make defconfig
-make package/scutclient/compile V=s
-```
-The compiled ipk will be placed under **bin** directory.
-
-#### Using OpenWrt source code
-
-Select **scutclient** under **Network** tab and start building your firmware.
-
-# Usage
-```bash
-scutclient --username <username> --password <password> [options...]
- -i, --iface <ifname> Interface to perform authentication.
- -n, --dns <dns> DNS server address to be sent to UDP server.
- -H, --hostname <hostname>
- -s, --udp-server <server>
- -c, --cli-version <client version>
- -T, --net-time <time> The time you are allowed to access internet. e.g. 6:10
- -h, --hash <hash> DrAuthSvr.dll hash value.
- -E, --online-hook <command> Command to be execute after EAP authentication success.
- -Q, --offline-hook <command> Command to be execute when you are forced offline at nignt.
- -D, --debug
- -o, --logoff
+```text
+scutclient.exe
+scripts\scutclient-manager.bat
+scripts\scutclient-manager.ps1
+README.zh-CN.md
+README.md
+COPYING
 ```
 
-If any advice, open an issue or contact us at SCUT Router Group.
 
-# Contact us
 
-SCUT Router Group (Audit) on QQ : [262939451](http://jq.qq.com/?_wv=1027&k=2EzygcA)
+### 设置Windows登录时静默启动认证程序
 
-SCUT Router Group on [Sina Weibo](http://weibo.com/u/5148048459)
+管理员 cmd 中执行：
 
-SCUT Router Podcast on [Telegram](https://t.me/joinchat/AAAAAERy9tE0gUvyTM_GrA)
+```bat
+scripts\scutclient-manager.bat install
+```
 
-# License
+也可以右键以管理员身份运行 `scripts\scutclient-manager.bat`。
 
-[AGPLv3](https://www.gnu.org/licenses/agpl-3.0.html)
+脚本会自动列出可用网卡，按提示**输入网卡序号**，并按提示**输入校园网账号和密码**。
 
-![](https://www.gnu.org/graphics/agplv3-155x51.png)
+完成后，程序会在后台运行，不会弹出控制台窗口。脚本会自动注册Windows计划任务，使认证程序在当前用户登录时自动静默启动。下次Windows登录后，认证程序会自动启动并尝试完成校园网认证。
 
-We believe that you know what you are doing. You should get this software for free.
+如需检查任务是否已经注册成功，可以运行：
+
+```bat
+scripts\scutclient-manager.bat status
+```
+
+常用管理命令：
+
+```bat
+scripts\scutclient-manager.bat list
+scripts\scutclient-manager.bat status
+scripts\scutclient-manager.bat run
+scripts\scutclient-manager.bat stop
+scripts\scutclient-manager.bat uninstall
+```
+
+---
+
+## 常见问题
+
+提示找不到 `wpcap.dll` 或 `Packet.dll`：
+
+- 重新安装 Npcap 运行时。
+- 确认安装时勾选了 `WinPcap API-compatible Mode`。
+
+任务计划没有启动：
+
+- 执行 `scripts\scutclient-manager.bat status` 查看任务状态。
+- 查看 `C:\Windows\Temp\scutclient.log`。
+- 执行 `scripts\scutclient-manager.bat run` 手动测试任务。
+
+登录后没有网络响应：
+
+- 等网卡就绪后手动运行任务。
+- 如果设备网络初始化较慢，可以继续使用登录触发；如需无人登录自动认证，可手动
+  改为带延迟的开机触发任务。
+
+## 从源码构建
+
+构建环境：
+
+- Visual Studio 2022 Build Tools 或 Visual Studio
+- CMake
+- Npcap SDK
+
+x64 构建时，Npcap SDK 路径下必须存在：
+
+```text
+C:\npcap-sdk\Include\pcap.h
+C:\npcap-sdk\Lib\x64\wpcap.lib
+C:\npcap-sdk\Lib\x64\Packet.lib
+```
+
+构建命令：
+
+```bat
+set NPCAP_SDK=C:\npcap-sdk
+cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DNPCAP_SDK=C:\npcap-sdk
+cmake --build build --config Release
+```
+
+生成的可执行文件位于：
+
+```text
+build\Release\scutclient.exe
+```
+
+如果 CMake 提示生成器不匹配，说明 `build` 目录曾经用其他生成器配置过。
+删除旧构建目录后重新配置：
+
+```bat
+rmdir /s /q build
+```
+
+CMake 配置时报 `Npcap SDK was not found`：
+
+- 需要安装或解压 Npcap SDK，不只是安装 Npcap 运行时。
+- 检查 `C:\npcap-sdk\Include\pcap.h` 是否存在。
+- 配置时传入 `-DNPCAP_SDK=C:\npcap-sdk`。
+
+## 致谢与许可证
+
+本项目基于 scutclient 修改而来：
+
+- 原项目：https://github.com/scutclient/scutclient
+- 原作者：Scutclient Project
+- 原许可证：GNU Affero General Public License v3.0
+
+本分支将原项目的 Linux/OpenWrt 网络层替换为 Windows/Npcap/Winsock 实现，
+并增加了 Windows 构建说明和登录时静默启动脚本。
+
+本项目继续以 GNU AGPLv3 发布。发布二进制文件时，也应同时提供对应源码，并在 Release 包中保留 `COPYING` 许可证文本。

@@ -1,8 +1,15 @@
 #include "tracelog.h"
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#endif
+
 // 默认日志最大100KB大小
 #define MAXFILELEN 102400
 char logtime[20];
-char filepath[MAXFILEPATH] = "/tmp/scutclient.log";
+char filepath[MAXFILEPATH] = "scutclient.log";
 FILE *logfile;
 LOGLEVEL cloglev = INF;
 
@@ -12,14 +19,35 @@ const static char *LogTypeText[] =
 		{ "ALL", "INIT", "8021X", "DRCOM" };
 
 static unsigned long get_file_size(const char *path) {
-	unsigned long filesize = -1;
-	struct stat statbuff;
-	if (stat(path, &statbuff) < 0) {
-		return filesize;
-	} else {
-		filesize = statbuff.st_size;
+	FILE *fp = fopen(path, "rb");
+	long filesize;
+	if (!fp) {
+		return 0;
 	}
-	return filesize;
+	if (fseek(fp, 0, SEEK_END) != 0) {
+		fclose(fp);
+		return 0;
+	}
+	filesize = ftell(fp);
+	fclose(fp);
+	return filesize < 0 ? 0 : (unsigned long) filesize;
+}
+
+static void init_log_path(void) {
+	static int initialized = 0;
+	if (initialized) {
+		return;
+	}
+	initialized = 1;
+#ifdef _WIN32
+	{
+		char tmp[MAXFILEPATH];
+		DWORD len = GetTempPathA(sizeof(tmp), tmp);
+		if (len > 0 && len < sizeof(tmp)) {
+			snprintf(filepath, sizeof(filepath), "%sscutclient.log", tmp);
+		}
+	}
+#endif
 }
 
 /*
@@ -31,20 +59,16 @@ static void settime() {
 }
 
 static int initlog(LOGTYPE logtype, LOGLEVEL loglevel) {
+	init_log_path();
 	//获取日志时间
 	settime();
 
 	// 判定是否大于指定的大小，进行重命名为备份文件
 	if (get_file_size(filepath) > MAXFILELEN) {
-		char cmdbuf[256] = { 0 };
-		strcat(cmdbuf, "mv ");
-		strcat(cmdbuf, filepath);
-		strcat(cmdbuf, " ");
-		strcat(cmdbuf, filepath);
-		strcat(cmdbuf, ".backup.log");
-		if ((access(filepath, F_OK)) != -1) {
-			system(cmdbuf);
-		}
+		char backup[MAXFILEPATH];
+		snprintf(backup, sizeof(backup), "%s.backup.log", filepath);
+		remove(backup);
+		rename(filepath, backup);
 	}
 
 	if ((logfile = fopen(filepath, "a+")) == NULL) {
@@ -60,7 +84,7 @@ static int initlog(LOGTYPE logtype, LOGLEVEL loglevel) {
 /*
  *日志写入
  * */
-int LogWrite(LOGTYPE logtype, LOGLEVEL loglevel, char *format, ...) {
+int LogWrite(LOGTYPE logtype, LOGLEVEL loglevel, const char *format, ...) {
 	va_list args;
 
 	if (loglevel > cloglev)
