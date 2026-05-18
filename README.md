@@ -3,6 +3,7 @@
 scutclient Windows 是 SCUT Dr.com(X) 客户端的 Windows 原生版本，用于在Windows 上完成校园网 802.1X/Dr.com 认证。
 
 ---
+
 ## 快速开始
 
 本程序依赖 Npcap。运行前请先安装 Npcap 运行时，并在安装时勾选：
@@ -28,8 +29,6 @@ README.md
 COPYING
 ```
 
-
-
 ### 设置Windows登录时静默启动认证程序
 
 管理员 cmd 中执行：
@@ -42,7 +41,7 @@ scripts\scutclient-manager.bat install
 
 脚本会自动列出可用网卡，按提示**输入网卡序号**，并按提示**输入校园网账号和密码**。
 
-完成后，程序会在后台运行，不会弹出控制台窗口。脚本会自动注册Windows计划任务，使认证程序在当前用户登录时自动静默启动。下次Windows登录后，认证程序会自动启动并尝试完成校园网认证。
+完成后，脚本会自动注册Windows计划任务，使认证程序在当前用户登录时自动静默启动。程序会在后台运行，不会弹出控制台窗口。下次Windows登录后，认证程序会自动启动并尝试完成校园网认证。
 
 如需检查任务是否已经注册成功，可以运行：
 
@@ -60,27 +59,14 @@ scripts\scutclient-manager.bat stop
 scripts\scutclient-manager.bat uninstall
 ```
 
----
-
-## 常见问题
+### 常见问题
 
 提示找不到 `wpcap.dll` 或 `Packet.dll`：
 
 - 重新安装 Npcap 运行时。
 - 确认安装时勾选了 `WinPcap API-compatible Mode`。
 
-任务计划没有启动：
-
-- 执行 `scripts\scutclient-manager.bat status` 查看任务状态。
-- 查看 `C:\Windows\Temp\scutclient.log`。
-- 执行 `scripts\scutclient-manager.bat run` 手动测试任务。
-
-登录后没有网络响应：
-
-- 等网卡就绪后手动运行任务。
-- 如果设备网络初始化较慢，可以继续使用登录触发；如需无人登录自动认证，可手动
-  改为带延迟的开机触发任务。
-
+---
 ## 从源码构建
 
 构建环境：
@@ -111,19 +97,7 @@ cmake --build build --config Release
 build\Release\scutclient.exe
 ```
 
-如果 CMake 提示生成器不匹配，说明 `build` 目录曾经用其他生成器配置过。
-删除旧构建目录后重新配置：
-
-```bat
-rmdir /s /q build
-```
-
-CMake 配置时报 `Npcap SDK was not found`：
-
-- 需要安装或解压 Npcap SDK，不只是安装 Npcap 运行时。
-- 检查 `C:\npcap-sdk\Include\pcap.h` 是否存在。
-- 配置时传入 `-DNPCAP_SDK=C:\npcap-sdk`。
-
+---
 ## 致谢与许可证
 
 本项目基于 scutclient 修改而来：
