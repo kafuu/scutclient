@@ -1,6 +1,6 @@
-# scutclient for Windows
+# scutclient Windows
 
-scutclient for Windows 是 SCUT Dr.com(X) 客户端的 Windows 原生版本，用于在Windows 上完成校园网 802.1X/Dr.com 认证。
+scutclient Windows 是 SCUT Dr.com(X) 客户端的 Windows 原生版本，用于在Windows 上完成校园网 802.1X/Dr.com 认证。
 
 ---
 
@@ -42,8 +42,7 @@ scutclient.exe --list-ifaces
 scutclient.exe --iface "\Device\NPF_{GUID}" --username USER --password PASS
 ```
 
-其中 `USER`、`PASS` 和 `\Device\NPF_{GUID}` 需要替换为实际账号、密码和
-网卡名称。
+其中 `USER`、`PASS` 和 `\Device\NPF_{GUID}` 需要替换为实际账号、密码和网卡名称。
 
 请先确认前台运行时能够完成认证、网络可用，再继续设置登录时静默启动。
 ### 设置Windows登录时静默启动认证程序
@@ -75,13 +74,6 @@ scripts\scutclient-manager.bat run
 scripts\scutclient-manager.bat stop
 scripts\scutclient-manager.bat uninstall
 ```
-
-### 常见问题
-
-提示找不到 `wpcap.dll` 或 `Packet.dll`：
-
-- 重新安装 Npcap 运行时。
-- 确认安装时勾选了 `WinPcap API-compatible Mode`。
 
 ---
 ## 从源码构建
