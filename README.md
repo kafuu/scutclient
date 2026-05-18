@@ -1,6 +1,6 @@
-# scutclient Windows
+# scutclient for Windows
 
-scutclient Windows 是 SCUT Dr.com(X) 客户端的 Windows 原生版本，用于在Windows 上完成校园网 802.1X/Dr.com 认证。
+scutclient for Windows 是 SCUT Dr.com(X) 客户端的 Windows 原生版本，用于在Windows 上完成校园网 802.1X/Dr.com 认证。
 
 ---
 
