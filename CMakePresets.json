@@ -1,0 +1,43 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "vs2022-x64",
+      "displayName": "Visual Studio 2022 x64",
+      "description": "Configure the native Windows build with Visual Studio 2022 in a generator-specific directory.",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/build-vs2022-x64",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/install-vs2022-x64"
+      }
+    },
+    {
+      "name": "nmake-x64",
+      "displayName": "NMake Makefiles x64",
+      "description": "Configure from a Visual Studio Developer Command Prompt using NMake.",
+      "generator": "NMake Makefiles",
+      "binaryDir": "${sourceDir}/build-nmake-x64",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/install-nmake-x64"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "vs2022-x64-release",
+      "configurePreset": "vs2022-x64",
+      "configuration": "Release"
+    },
+    {
+      "name": "nmake-x64-release",
+      "configurePreset": "nmake-x64",
+      "configuration": "Release"
+    }
+  ]
+}

@@ -1,3 +1,6 @@
+#ifndef SCUTCLIENT_AUTH_H
+#define SCUTCLIENT_AUTH_H
+
 /* File: auth.h
  * ------------
  * 注：核心函数为Authentication()，由该函数执行801.1X认证
@@ -7,9 +10,34 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <unistd.h>
 #include <time.h>
 #include <errno.h>
+
+#include "info.h"
+
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
+#include <iphlpapi.h>
+#include <pcap.h>
+#ifndef ENETUNREACH
+#define ENETUNREACH WSAENETUNREACH
+#endif
+#ifndef EPROTO
+#define EPROTO 134
+#endif
+#define ETH_ALEN 6
+#define ETH_P_PAE 0x888e
+#define ETH_FRAME_LEN SCUT_ETH_FRAME_LEN
+#ifndef PCAP_NETMASK_UNKNOWN
+#define PCAP_NETMASK_UNKNOWN 0xffffffff
+#endif
+#else
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -20,9 +48,9 @@
 #include <fcntl.h>
 #include <net/if.h>
 #include <linux/if_packet.h>
+#endif
 
 #include "functions.h"
-#include "info.h"
 #include "drcom.h"
 
 #define LOGOFF 0 // 下线标志位
@@ -46,4 +74,6 @@ int Drcom_UDP_Handler(uint8_t *recv_data);
 void initAuthenticationInfo();
 int loginToGetServerMAC(uint8_t recv_data[]);
 void printIfInfo();
+int auth_ListInterfaces(void);
 
+#endif

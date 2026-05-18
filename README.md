@@ -1,92 +1,159 @@
-scutclient
-=================
+# scutclient Windows
 
-SCUT Dr.com(X) client written in C.
+Languages: English | [简体中文](README.zh-CN.md)
 
-# Compiling
-## Using automake (for all distribution)
-```bash
-git clone https://github.com/scutclient/scutclient.git
-cd scutclient
-mkdir build && cd build
-cmake ..
-make
+SCUT Dr.com(X) client native Windows port.
+
+This fork keeps the original Dr.com packet construction and authentication
+state machine, and replaces the Linux/OpenWrt network layer with Windows APIs:
+
+- Npcap for 802.1X/EAPOL Ethernet frames (`0x888e`)
+- Winsock for UDP heartbeats
+- IP Helper API for adapter selection, IPv4 address, and MAC address
+
+## Requirements
+
+Runtime:
+
+- Windows 10/11
+- Npcap runtime installed with `WinPcap API-compatible Mode`
+- Administrator privileges for first-run testing and task installation
+
+Build:
+
+- Visual Studio 2022 Build Tools or Visual Studio
+- CMake
+- Npcap SDK
+
+The Npcap SDK path must contain these files for x64 builds:
+
+```text
+C:\npcap-sdk\Include\pcap.h
+C:\npcap-sdk\Lib\x64\wpcap.lib
+C:\npcap-sdk\Lib\x64\Packet.lib
 ```
 
-## Using OpenWrt buildroot
-### Download source code
-To compile the latest stable version, you only need **openwrt/Makefile** in the source code. Buildroot will automatically download the source.
+## Build
 
-If you want to compile the latest git HEAD, you need to clone the entire repository and checkout to the branch/version you need.
+From a Visual Studio Developer Command Prompt or a normal cmd where CMake can
+find Visual Studio:
 
-### Preparation
-#### Using SDK
-Download and extract the SDK you need. For example(Snapshots on ar71xx):
-```bash
-wget https://downloads.openwrt.org/snapshots/targets/ar71xx/generic/openwrt-sdk-ar71xx-generic_gcc-5.5.0_musl.Linux-x86_64.tar.xz
-tar -Jxvf openwrt-sdk-ar71xx-generic_gcc-5.5.0_musl.Linux-x86_64.tar.xz
-cd openwrt-sdk-ar71xx-generic_gcc-5.5.0_musl.Linux-x86_64
+```bat
+set NPCAP_SDK=C:\npcap-sdk
+cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DNPCAP_SDK=C:\npcap-sdk
+cmake --build build --config Release
 ```
 
-#### Using OpenWrt source code
-Nothing to do here.
+A successful build ends with a line like:
 
-### Creating your package
-Create a directory called scutclient inside your package directory and copy openwrt/Makefile into it. (Of course this can be done using GUI file manager :D )
-```bash
-mkdir package/scutclient
-cp {SCUTCLIENT_SRC_DIR}/openwrt/Makefile package/scutclient
-```
-Then you've created a package for the latest stable version.
-
-If you want to compile other version you need to edit the **openwrt/Makefile** and change variable SRCDIR (at line 12) to your source code directory. 
-
-
-### Compiling
-#### Using SDK
-
-Execute the following command:
-
-```bash
-make defconfig
-make package/scutclient/compile V=s
-```
-The compiled ipk will be placed under **bin** directory.
-
-#### Using OpenWrt source code
-
-Select **scutclient** under **Network** tab and start building your firmware.
-
-# Usage
-```bash
-scutclient --username <username> --password <password> [options...]
- -i, --iface <ifname> Interface to perform authentication.
- -n, --dns <dns> DNS server address to be sent to UDP server.
- -H, --hostname <hostname>
- -s, --udp-server <server>
- -c, --cli-version <client version>
- -T, --net-time <time> The time you are allowed to access internet. e.g. 6:10
- -h, --hash <hash> DrAuthSvr.dll hash value.
- -E, --online-hook <command> Command to be execute after EAP authentication success.
- -Q, --offline-hook <command> Command to be execute when you are forced offline at nignt.
- -D, --debug
- -o, --logoff
+```text
+scutclient.vcxproj -> D:\...\scutclient-windows\build\Release\scutclient.exe
 ```
 
-If any advice, open an issue or contact us at SCUT Router Group.
+If CMake reports that the generator does not match a previous run, delete the
+old build directory or use a different directory:
 
-# Contact us
+```bat
+rmdir /s /q build
+```
 
-SCUT Router Group (Audit) on QQ : [262939451](http://jq.qq.com/?_wv=1027&k=2EzygcA)
+## First Run
 
-SCUT Router Group on [Sina Weibo](http://weibo.com/u/5148048459)
+Open cmd as Administrator.
 
-SCUT Router Podcast on [Telegram](https://t.me/joinchat/AAAAAERy9tE0gUvyTM_GrA)
+List usable Npcap adapters:
 
-# License
+```bat
+build\Release\scutclient.exe --list-ifaces
+```
 
-[AGPLv3](https://www.gnu.org/licenses/agpl-3.0.html)
+Authenticate with the adapter that worked in your environment:
 
-![](https://www.gnu.org/graphics/agplv3-155x51.png)
+```bat
+build\Release\scutclient.exe --iface "\Device\NPF_{GUID}" --username USER --password PASS
+```
 
-We believe that you know what you are doing. You should get this software for free.
+Keep the exact `--iface` value for the startup script.
+
+## Silent Startup
+
+The helper script creates a Windows scheduled task that runs at user logon as
+`SYSTEM`. This avoids a visible console window.
+
+Run cmd as Administrator, then:
+
+```bat
+scripts\setup-startup-task.bat list
+scripts\setup-startup-task.bat install --iface "\Device\NPF_{GUID}" --username USER --password PASS
+```
+
+The script automatically looks for:
+
+```text
+build\Release\scutclient.exe
+build-vs2022-x64\Release\scutclient.exe
+build-nmake-x64\scutclient.exe
+```
+
+If your executable is elsewhere, pass it explicitly:
+
+```bat
+scripts\setup-startup-task.bat install --exe "D:\path\to\scutclient.exe" --iface "\Device\NPF_{GUID}" --username USER --password PASS
+```
+
+Useful management commands:
+
+```bat
+scripts\setup-startup-task.bat status
+scripts\setup-startup-task.bat run
+scripts\setup-startup-task.bat uninstall
+```
+
+The default task name is `scutclient`. To use another name:
+
+```bat
+scripts\setup-startup-task.bat install --task-name scutclient-campus --iface "\Device\NPF_{GUID}" --username USER --password PASS
+```
+
+## Logs
+
+When run manually, logs are printed to the console and written to `%TEMP%`.
+
+When run by the scheduled task as `SYSTEM`, the log path is usually:
+
+```text
+C:\Windows\Temp\scutclient.log
+```
+
+## Security Notes
+
+The scheduled task stores command-line arguments, including the password, in the
+task definition. Anyone with administrative access can read it.
+
+If this is not acceptable, the program should be extended later to read
+credentials from a protected config file or Windows Credential Manager.
+
+## Troubleshooting
+
+`wpcap.dll` or `Packet.dll` not found:
+
+- Reinstall Npcap runtime.
+- Make sure `WinPcap API-compatible Mode` is selected.
+
+`Npcap SDK was not found` during CMake configure:
+
+- Install/extract the Npcap SDK, not only the runtime.
+- Check that `C:\npcap-sdk\Include\pcap.h` exists.
+- Pass `-DNPCAP_SDK=C:\npcap-sdk`.
+
+The scheduled task does not appear to start:
+
+- Run `scripts\setup-startup-task.bat status`.
+- Check `C:\Windows\Temp\scutclient.log`.
+- Test manually with `scripts\setup-startup-task.bat run`.
+
+No network response on startup:
+
+- Try logging in again after the adapter is ready.
+- If the network stack on your machine initializes slowly, recreate the task as
+  `ONSTART` with delay manually, or keep the default logon trigger.
